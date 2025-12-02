@@ -2,8 +2,20 @@
 
 import { useState } from "react";
 
-export default function Home() {
-  const [form, setForm] = useState({
+type JobForm = {
+  source: string;
+  company: string;
+  role: string;
+  yoe: string;
+  pay: string;
+  link: string;
+  applied: string;
+  appliedDate: string;
+  responded: string;
+};
+
+export default function NewJobPage() {
+  const [form, setForm] = useState<JobForm>({
     source: "",
     company: "",
     role: "",
@@ -14,11 +26,41 @@ export default function Home() {
     appliedDate: "",
     responded: "",
   });
-  const [status, setStatus] = useState<null | { type: "ok" | "error"; msg: string }>(null);
+
+  const [jd, setJd] = useState("");
+
+  const [status, setStatus] = useState<null | {
+    type: "ok" | "error";
+    msg: string;
+  }>(null);
+
   const [loading, setLoading] = useState(false);
 
-  const update = (field: string, value: string) => {
+  const update = (field: keyof JobForm, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // 💡 FREE heuristic parser – runs only in browser, no APIs
+  const extractFromJD = () => {
+    if (!jd.trim()) {
+      setStatus({
+        type: "error",
+        msg: "Paste a job description first.",
+      });
+      return;
+    }
+
+    const parsed = parseJD(jd);
+
+    setForm((prev) => ({
+      ...prev,
+      ...parsed,
+    }));
+
+    setStatus({
+      type: "ok",
+      msg: "Auto-filled fields from JD. Please review and edit if needed.",
+    });
   };
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -50,8 +92,10 @@ export default function Home() {
         appliedDate: "",
         responded: "",
       });
+      setJd("");
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : "Something went wrong";
+      const errorMessage =
+        err instanceof Error ? err.message : "Something went wrong";
       setStatus({ type: "error", msg: errorMessage });
     } finally {
       setLoading(false);
@@ -61,15 +105,32 @@ export default function Home() {
   return (
     <main className="min-h-screen flex items-start justify-center bg-zinc-100 py-10">
       <div className="bg-white w-full max-w-xl rounded-2xl shadow-lg p-6">
-        <h1 className="text-2xl font-semibold mb-1">Job Tracker</h1>
-        <p className="text-sm text-gray-500 mb-5">
+        <h1 className="text-2xl font-semibold mb-1 text-black">Job Tracker</h1>
+        <p className="text-sm text-black mb-5">
           Fill this form and it will be added directly to your Google Sheet.
         </p>
 
         <form onSubmit={onSubmit} className="space-y-3">
+          {/* JD paste area */}
+          <Field label="Job Description (Paste JD)">
+            <textarea
+              className="w-full border rounded-lg px-3 py-2 text-sm min-h-[120px] text-black"
+              value={jd}
+              onChange={(e) => setJd(e.target.value)}
+              placeholder="Paste the full job description here..."
+            />
+            <button
+              type="button"
+              onClick={extractFromJD}
+              className="mt-2 text-xs px-3 py-1 rounded-full border border-blue-600 text-blue-600 hover:bg-blue-50"
+            >
+              Auto-fill from JD (Free)
+            </button>
+          </Field>
+
           <Field label="Source">
             <input
-              className="w-full border rounded-lg px-3 py-2 text-sm"
+              className="w-full border rounded-lg px-3 py-2 text-sm text-black"
               value={form.source}
               onChange={(e) => update("source", e.target.value)}
               placeholder="WellFound, LinkedIn, etc."
@@ -78,7 +139,7 @@ export default function Home() {
 
           <Field label="Company" required>
             <input
-              className="w-full border rounded-lg px-3 py-2 text-sm"
+              className="w-full border rounded-lg px-3 py-2 text-sm text-black"
               value={form.company}
               onChange={(e) => update("company", e.target.value)}
               required
@@ -87,7 +148,7 @@ export default function Home() {
 
           <Field label="Role">
             <input
-              className="w-full border rounded-lg px-3 py-2 text-sm"
+              className="w-full border rounded-lg px-3 py-2 text-sm text-black"
               value={form.role}
               onChange={(e) => update("role", e.target.value)}
               placeholder="Software Engineer Intern"
@@ -96,7 +157,7 @@ export default function Home() {
 
           <Field label="YOE">
             <input
-              className="w-full border rounded-lg px-3 py-2 text-sm"
+              className="w-full border rounded-lg px-3 py-2 text-sm text-black"
               value={form.yoe}
               onChange={(e) => update("yoe", e.target.value)}
               placeholder="0, 1, etc."
@@ -105,7 +166,7 @@ export default function Home() {
 
           <Field label="Pay">
             <input
-              className="w-full border rounded-lg px-3 py-2 text-sm"
+              className="w-full border rounded-lg px-3 py-2 text-sm text-black"
               value={form.pay}
               onChange={(e) => update("pay", e.target.value)}
               placeholder="1L – 2L"
@@ -114,7 +175,7 @@ export default function Home() {
 
           <Field label="Job Link">
             <input
-              className="w-full border rounded-lg px-3 py-2 text-sm"
+              className="w-full border rounded-lg px-3 py-2 text-sm text-black"
               value={form.link}
               onChange={(e) => update("link", e.target.value)}
               placeholder="https://..."
@@ -124,7 +185,7 @@ export default function Home() {
 
           <Field label="Applied?">
             <select
-              className="w-full border rounded-lg px-3 py-2 text-sm"
+              className="w-full border rounded-lg px-3 py-2 text-sm text-black"
               value={form.applied}
               onChange={(e) => update("applied", e.target.value)}
             >
@@ -137,7 +198,7 @@ export default function Home() {
 
           <Field label="Applied Date">
             <input
-              className="w-full border rounded-lg px-3 py-2 text-sm"
+              className="w-full border rounded-lg px-3 py-2 text-sm text-black"
               value={form.appliedDate}
               onChange={(e) => update("appliedDate", e.target.value)}
               type="date"
@@ -146,7 +207,7 @@ export default function Home() {
 
           <Field label="Responded / Notes">
             <textarea
-              className="w-full border rounded-lg px-3 py-2 text-sm"
+              className="w-full border rounded-lg px-3 py-2 text-sm text-black"
               value={form.responded}
               onChange={(e) => update("responded", e.target.value)}
               placeholder="e.g. sent assignment, waiting..."
@@ -176,6 +237,7 @@ export default function Home() {
   );
 }
 
+
 function Field({
   label,
   required,
@@ -187,10 +249,80 @@ function Field({
 }) {
   return (
     <div className="space-y-1">
-      <label className="text-xs font-medium text-gray-700">
+      <label className="text-xs font-medium text-black">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       {children}
     </div>
   );
+}
+
+
+function parseJD(jd: string): Partial<JobForm> {
+  const result: Partial<JobForm> = {};
+
+  const cleaned = jd.replace(/\r/g, "");
+  const lines = cleaned
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  const lower = cleaned.toLowerCase();
+
+  const titleLine =
+    lines.find((l) => /job title|position/i.test(l)) || lines[0];
+
+  if (titleLine) {
+    let role = titleLine.replace(/^(job title|position)\s*[:\-]\s*/i, "");
+
+    role = role.replace(/^(hiring for|we are hiring for|we are hiring)\s*/i, "");
+    result.role = role;
+  }
+
+
+  const companyLine = lines.find((l) => /^company\s*[:\-]/i.test(l));
+  if (companyLine) {
+    const parts = companyLine.split(/[:\-]/);
+    if (parts[1]) result.company = parts[1].trim();
+  } else {
+    const atMatch = cleaned.match(/at\s+([A-Z][A-Za-z0-9&().,\- ]{2,60})/);
+    if (atMatch) result.company = atMatch[1].trim();
+  }
+
+
+  const yoeMatch =
+    cleaned.match(/(\d+)\s*-\s*(\d+)\s*(years?|yrs?|yr)/i) || // range
+    cleaned.match(/(\d+)\+?\s*(years?|yrs?|yr)/i); // single
+  if (yoeMatch) {
+
+    if (yoeMatch[2]) {
+      result.yoe = `${yoeMatch[1]}-${yoeMatch[2]}`;
+    } else {
+      result.yoe = yoeMatch[1];
+    }
+  }
+
+  const payMatch =
+    cleaned.match(
+      /(₹|rs\.?|inr|usd|\$)\s?[\d.,]+(\s*-\s*[\d.,]+)?\s*(lpa|pa|per annum|month|mo)?/i,
+    ) || cleaned.match(/[\d.,]+\s*(lpa|LPA)/);
+
+  if (payMatch) {
+    result.pay = payMatch[0].trim();
+  }
+
+
+  if (lower.includes("linkedin")) result.source = "LinkedIn";
+  else if (lower.includes("naukri")) result.source = "Naukri";
+  else if (lower.includes("wellfound") || lower.includes("angel.co"))
+    result.source = "WellFound";
+  else if (lower.includes("instahyre")) result.source = "Instahyre";
+
+
+  const linkMatch = cleaned.match(/https?:\/\/\S+/);
+  if (linkMatch) {
+    result.link = linkMatch[0].replace(/[).,]$/, ""); 
+  }
+
+  return result;
 }
